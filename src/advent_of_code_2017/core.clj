@@ -2,6 +2,20 @@
   (:import (jdk.internal.util.xml.impl Input)))
 
 ;; Day 1
+
+;You're standing in a room with "digitization quarantine" written in LEDs along one wall. The only door is locked, but it includes a small interface. "Restricted Area - Strictly No Digitized Users Allowed."
+;
+;It goes on to explain that you may only leave by solving a captcha to prove you're not a human. Apparently, you only get one millisecond to solve the captcha: too fast for a normal human, but it feels like hours to you.
+;
+;The captcha requires you to review a sequence of digits (your puzzle input) and find the sum of all digits that match the next digit in the list. The list is circular, so the digit after the last digit is the first digit in the list.
+;
+;For example:
+;
+;1122 produces a sum of 3 (1 + 2) because the first digit (1) matches the second digit and the third digit (2) matches the fourth digit.
+;1111 produces 4 because each digit (all 1) matches the next.
+;1234 produces 0 because no digit matches the next.
+;91212129 produces 9 because the only digit that matches the next one is the last digit, 9.
+
 (def input-1 "5255443714755555317777152441826784321918285999594221531636242944998363716119294845838579943562543247239969555791772392681567883449837982119239536325341263524415397123824358467891963762948723327774545715851542429832119179139914471523515332247317441719184556891362179267368325486642376685657759623876854958721636574219871249645773738597751429959437466876166273755524873351452951411628479352522367714269718514838933283861425982562854845471512652555633922878128558926123935941858532446378815929573452775348599693982834699757734714187831337546474515678577158721751921562145591166634279699299418269158557557996583881642468274618196335267342897498486869925262896125146867124596587989531495891646681528259624674792728146526849711139146268799436334618974547539561587581268886449291817335232859391493839167111246376493191985145848531829344198536568987996894226585837348372958959535969651573516542581144462536574953764413723147957237298324458181291167587791714172674717898567269547766636143732438694473231473258452166457194797819423528139157452148236943283374193561963393846385622218535952591588353565319432285579711881559343544515461962846879685879431767963975654347569385354482226341261768547328749947163864645168428953445396361398873536434931823635522467754782422557998262858297563862492652464526366171218276176258582444923497181776129436396397333976215976731542182878979389362297155819461685361676414725597335759976285597713332688275241271664658286868697167515329811831234324698345159949135474463624749624626518247831448143876183133814263977611564339865466321244399177464822649611969896344874381978986453566979762911155931362394192663943526834148596342268321563885255765614418141828934971927998994739769141789185165461976425151855846739959338649499379657223196885539386154935586794548365861759354865453211721551776997576289811595654171672259129335243531518228282393326395241242185795828261319215164262237957743232558971289145639852148197184265766291885259847236646615935963759631145338159257538114359781854685695429348428884248972177278361353814766653996675994784195827214295462389532422825696456457332417366426619555")
 
 ;; 1. Gå igenom strängen
@@ -22,6 +36,16 @@
                 sum)))
           0
           (range (count input))))
+
+;Now, instead of considering the next digit, it wants you to consider the digit halfway around the circular list. That is, if your list contains 10 items, only include a digit in your sum if the digit 10/2 = 5 steps forward matches it. Fortunately, your list has an even number of elements.
+;
+;For example:
+;
+;1212 produces 6: the list contains 4 items, and all four digits match the digit 2 items ahead.
+;1221 produces 0, because every comparison is between a 1 and a 2.
+;123425 produces 4, because both 2s match each other, but no other digit has a match.
+;123123 produces 12.
+;12131415 produces 4.
 
 ;; Om någon matchar i första halvan kommer den matcha med samma i andra halvan
 ;; --> Gå bara igenom halva strängen
@@ -50,3 +74,109 @@
 
   )
 
+;; Day 2
+
+;As you walk through the door, a glowing humanoid shape yells in your direction. "You there! Your state appears to be idle. Come help us repair the corruption in this spreadsheet - if we take another millisecond, we'll have to display an hourglass cursor!"
+;
+;The spreadsheet consists of rows of apparently-random numbers. To make sure the recovery process is on the right track, they need you to calculate the spreadsheet's checksum. For each row, determine the difference between the largest value and the smallest value; the checksum is the sum of all of these differences.
+;
+;For example, given the following spreadsheet:
+;
+;5 1 9 5
+;7 5 3
+;2 4 6 8
+;The first row's largest and smallest values are 9 and 1, and their difference is 8.
+;The second row's largest and smallest values are 7 and 3, and their difference is 4.
+;The third row's difference is 6.
+;In this example, the spreadsheet's checksum would be 8 + 4 + 6 = 18.
+;
+;What is the checksum for the spreadsheet in your puzzle input?
+
+(def input-2 (slurp "assets/input-2.txt"))
+
+(defn problem-2a
+  [input]
+  (reduce (fn [sum row-string]
+            (let [row-numbers (->> (clojure.string/split row-string #"\t")
+                                   (map read-string))]
+              (+ sum (- (apply max row-numbers) (apply min row-numbers)))))
+          0
+          (clojure.string/split-lines input)))
+
+;"Based on what we're seeing, it looks like all the User wanted is some information about the evenly divisible values in the spreadsheet. Unfortunately, none of us are equipped for that kind of calculation - most of us specialize in bitwise operations."
+;
+;It sounds like the goal is to find the only two numbers in each row where one evenly divides the other - that is, where the result of the division operation is a whole number. They would like you to find those numbers on each line, divide them, and add up each line's result.
+;
+;For example, given the following spreadsheet:
+;
+;5 9 2 8
+;9 4 7 3
+;3 8 6 5
+;In the first row, the only two numbers that evenly divide are 8 and 2; the result of this division is 4.
+;In the second row, the two numbers are 9 and 3; the result is 3.
+;In the third row, the result is 2.
+;In this example, the sum of the results would be 4 + 3 + 2 = 9.
+;
+;What is the sum of each row's result in your puzzle input?
+
+(defn problem-2b
+  [input]
+  (reduce (fn [sum row-string]
+            (let [row-numbers (->> (clojure.string/split row-string #"\t")
+                                   (map read-string))]
+              (+ sum (reduce (fn [result index]
+                               (let [number (nth row-numbers index)
+                                     compare-numbers (drop (inc index) row-numbers)
+                                     matching-number (first (filter (fn [compare-number]
+                                                                      (or (= 0 (mod number compare-number))
+                                                                          (= 0 (mod compare-number number))))
+                                                                    compare-numbers))]
+                                 (if (nil? matching-number)
+                                   result
+                                   (if (= 0 (mod number matching-number))
+                                     (/ number matching-number)
+                                     (/ matching-number number)))))
+                             0
+                             (range (count row-numbers))))))
+          0
+          (clojure.string/split-lines input)))
+
+(defn problem-2b'
+  [input]
+  (reduce (fn [sum row-string]
+            (let [row-numbers (->> (clojure.string/split row-string #"\t")
+                                   (map read-string))]
+              (+ sum (loop [number-index 0
+                            compare-index 1]
+                       (let [number (nth row-numbers number-index)
+                             compare-number (nth row-numbers compare-index)]
+                         (cond
+                           ;; Don't compare to itself
+                           (= number-index compare-index)
+                           (recur number-index (inc compare-index))
+
+                           (= 0 (mod number compare-number))
+                           (/ number compare-number)
+
+                           (= 0 (mod compare-number number))
+                           (/ compare-number number)
+
+                           ;; Compared number to all other numbers
+                           (= compare-index (dec (count row-numbers)))
+                           (recur (inc number-index) 0)
+
+                           :else
+                           (recur number-index (inc compare-index))
+                           ))))))
+          0
+          (clojure.string/split-lines input)))
+
+(comment
+
+  (problem-2a input-2)
+  ;; 21845
+
+  (problem-2b input-2)
+  ;; 191
+  (problem-2b' input-2)
+  )
