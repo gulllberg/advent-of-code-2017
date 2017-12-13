@@ -248,11 +248,77 @@
 ;362  747  806--->   ...
 ;What is the first value written that is larger than your puzzle input?
 
+(defn problem-3b
+  [input]
+  (loop [[x y] [2 -1]
+         ;; Kan initiera med mindre?
+         grid {"0+0"   1
+               "1+0"   1
+               "1+1"   2
+               "0+1"   4
+               "-1+1"  5
+               "-1+0"  10
+               "-1+-1" 11
+               "0+-1"  23
+               "1+-1"  25}]
+    (let [north (get grid (str x "+" (inc y)))
+          north-west (get grid (str (dec x) "+" (inc y)))
+          west (get grid (str (dec x) "+" y))
+          south-west (get grid (str (dec x) "+" (dec y)))
+          south (get grid (str x "+" (dec y)))
+          south-east (get grid (str (inc x) "+" (dec y)))
+          east (get grid (str (inc x) "+" y))
+          north-east (get grid (str (inc x) "+" (inc y)))
+          sum (->> [north north-west west south-west south south-east east north-east]
+                   (map (fn [v] (or v 0)))
+                   (apply +))
+          next-direction (cond
+                           (and (not (nil? north))
+                                (not (nil? west)))
+                           [1 0]
+
+                           (not (nil? west))
+                           [0 1]
+
+                           ;; Kan tas bort?
+                           (and (not (nil? south))
+                                (not (nil? east)))
+                           [-1 0]
+
+                           (not (nil? south))
+                           [-1 0]
+
+                           ;; Kan tas bort?
+                           (and (not (nil? north))
+                                (not (nil? east)))
+                           [0 -1]
+
+                           (not (nil? east))
+                           [0 -1]
+
+                           (not (nil? north))
+                           [1 0]
+
+                           :else (println "Hittade inte nästa riktning"))]
+      (if (> sum input)
+        sum
+        (recur (mapv + [x y] next-direction)
+               (assoc grid
+                 (str x "+" y) sum
+                 (str x "+" (inc y)) north
+                 (str (dec x) "+" (inc y)) north-west
+                 (str (dec x) "+" y) west
+                 (str (dec x) "+" (dec y)) south-west
+                 (str x "+" (dec y)) south
+                 (str (inc x) "+" (dec y)) south-east
+                 (str (inc x) "+" y) east
+                 (str (inc x) "+" (inc y)) north-east))))))
 (comment
 
   (problem-3a input-3)
   ;; 552
-
+  (problem-3b input-3)
+  ;; 330785
   )
 
 
@@ -469,12 +535,12 @@
 
 (defn problem-7a
   [input]
-   (->> (clojure.string/split input #"\n")
+  (->> (clojure.string/split input #"\n")
        (sort-by (fn [program]
                   (-> (clojure.string/split program #" ")
                       (second)
                       (read-string)
-                       (nth 0))))
+                      (nth 0))))
        (last)))
 
 (comment
