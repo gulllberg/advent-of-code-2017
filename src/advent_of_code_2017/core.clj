@@ -1,10 +1,7 @@
 (ns advent-of-code-2017.core
-  ;(:require [ysera.test :refer [is= is is-not]]
-  ;          [ysera.error :refer [error]]
-  ;          [ysera.collections :refer [seq-contains?]])
-  )
-;(:require [ysera.test :refer [is=]])
-;(:require [ysera.collections :refer [seq-contains?]])
+  (:require [ysera.test :refer [is= is is-not]]
+            [ysera.error :refer [error]]
+            [ysera.collections :refer [seq-contains?]]))
 
 ;; Day 1
 
@@ -280,10 +277,12 @@
     (= (count passphrase-list)
        (->> passphrase-list
             (set)
-            (into (vector))
             (count)))))
 
 (defn problem-4a
+  {:test (fn []
+           (is= (problem-4a input-4)
+                386))}
   [input]
   (->> (clojure.string/split input #"\n")
        (filter valid-passphrase-a?)
@@ -310,10 +309,12 @@
        (->> passphrase-list
             (map sort)
             (set)
-            (into (vector))
             (count)))))
 
 (defn problem-4b
+  {:test (fn []
+           (is= (problem-4b input-4)
+                208))}
   [input]
   (->> (clojure.string/split input #"\n")
        (filter valid-passphrase-b?)
