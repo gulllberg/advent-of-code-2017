@@ -251,7 +251,7 @@
 (defn problem-3b
   [input]
   (loop [[x y] [0 1]
-         grid {"0+0"   1}]
+         grid {"0+0" 1}]
     (let [north (get grid (str x "+" (inc y)))
           north-west (get grid (str (dec x) "+" (inc y)))
           west (get grid (str (dec x) "+" y))
@@ -517,19 +517,70 @@
 
 (defn problem-7a
   [input]
-  (->> (clojure.string/split input #"\n")
-       (sort-by (fn [program]
-                  (-> (clojure.string/split program #" ")
-                      (second)
-                      (read-string)
-                      (nth 0))))
-       (last)))
+  (let [programs (clojure.string/split input #"\n")
+        dependencies (reduce (fn [dependencies program]
+                               (let [program-dependencies (clojure.string/split program #"->")
+                                     program-dependencies-list (if (= (count program-dependencies) 1)
+                                                                 []
+                                                                 (-> (nth program-dependencies 1)
+                                                                     (clojure.string/trim)
+                                                                     (clojure.string/split #", ")))]
+                                 (clojure.set/union dependencies (into #{} program-dependencies-list))))
+                             #{}
+                             programs)
+        names (map (fn [program]
+                     (-> (clojure.string/split program #" ")
+                         (nth 0)))
+                   programs)]
+    (-> (remove (fn [name] (seq-contains? dependencies name)) names)
+        (first)))
+  )
+
+;The programs explain the situation: they can't get down. Rather, they could get down, if they weren't expending all of their energy trying to keep the tower balanced. Apparently, one program has the wrong weight, and until it's fixed, they're stuck here.
+;
+;For any program holding a disc, each program standing on that disc forms a sub-tower. Each of those sub-towers are supposed to be the same weight, or the disc itself isn't balanced. The weight of a tower is the sum of the weights of the programs in that tower.
+;
+;In the example above, this means that for ugml's disc to be balanced, gyxo, ebii, and jptl must all have the same weight, and they do: 61.
+;
+;However, for tknk to be balanced, each of the programs standing on its disc and all programs above it must each match. This means that the following sums must all be the same:
+;
+;ugml + (gyxo + ebii + jptl) = 68 + (61 + 61 + 61) = 251
+;padx + (pbga + havc + qoyq) = 45 + (66 + 66 + 66) = 243
+;fwft + (ktlj + cntj + xhth) = 72 + (57 + 57 + 57) = 243
+;As you can see, tknk's disc is unbalanced: ugml's stack is heavier than the other two. Even though the nodes above ugml are balanced, ugml itself is too heavy: it needs to be 8 units lighter for its stack to weigh 243 and keep the towers balanced. If this change were made, its weight would be 60.
+;
+;Given that exactly one program is the wrong weight, what would its weight need to be to balance the entire tower?
+
+(defn get-dependencies
+  [programs program]
+  (let [program-dependencies (clojure.string/split program #"->")
+        program-dependencies-vector (if (= (count program-dependencies) 1)
+                                      []
+                                      (-> (nth program-dependencies 1)
+                                          (clojure.string/trim)
+                                          (clojure.string/split #", ")
+                                          (vector)))]
+    (filter (fn [program]
+              (seq-contains? program-dependencies-vector (-> (clojure.string/split program #" ")
+                                                             (nth 0))))
+            programs)))
+
+(defn get-weight
+  [program]
+  (-> (clojure.string/split program #" ")
+      (second)
+      (read-string)
+      (nth 0)))
+
+(defn get-total-weight
+  [programs program]
+  (apply + (get-weight program) (map get-weight (get-dependencies programs program))))
 
 (comment
-  (clojure.pprint/pprint input-7)
   (problem-7a input-7)
-  ;; pdvmaam WRONG, sortera på vikt går ej.
-  ;; Får kolla på någon som ingen har på sig, bra med seq-contains?
+  ;; hlqnsbe
+
+  (get-total-weight input-7 (nth (clojure.string/split input-7 #"\n") 0))
   )
 
 
