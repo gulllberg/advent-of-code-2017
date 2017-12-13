@@ -1,6 +1,10 @@
 (ns advent-of-code-2017.core
-  ;(:require [ysera.test :refer [is=]])
+  ;(:require [ysera.test :refer [is= is is-not]]
+  ;          [ysera.error :refer [error]]
+  ;          [ysera.collections :refer [seq-contains?]])
   )
+;(:require [ysera.test :refer [is=]])
+;(:require [ysera.collections :refer [seq-contains?]])
 
 ;; Day 1
 
@@ -393,3 +397,91 @@
   (problem-5b input-5)
   ;; 30513679
   )
+
+;; Day 6
+
+;In this area, there are sixteen memory banks; each memory bank can hold any number of blocks. The goal of the reallocation routine is to balance the blocks between the memory banks.
+;
+;The reallocation routine operates in cycles. In each cycle, it finds the memory bank with the most blocks (ties won by the lowest-numbered memory bank) and redistributes those blocks among the banks. To do this, it removes all of the blocks from the selected bank, then moves to the next (by index) memory bank and inserts one of the blocks. It continues doing this until it runs out of blocks; if it reaches the last memory bank, it wraps around to the first one.
+;
+;The debugger would like to know how many redistributions can be done before a blocks-in-banks configuration is produced that has been seen before.
+;
+;For example, imagine a scenario with only four memory banks:
+;
+;The banks start with 0, 2, 7, and 0 blocks. The third bank has the most blocks, so it is chosen for redistribution.
+;Starting with the next bank (the fourth bank) and then continuing to the first bank, the second bank, and so on, the 7 blocks are spread out over the memory banks. The fourth, first, and second banks get two blocks each, and the third bank gets one back. The final result looks like this: 2 4 1 2.
+;Next, the second bank is chosen because it contains the most blocks (four). Because there are four memory banks, each gets one block. The result is: 3 1 2 3.
+;Now, there is a tie between the first and fourth memory banks, both of which have three blocks. The first bank wins the tie, and its three blocks are distributed evenly over the other three banks, leaving it with none: 0 2 3 4.
+;The fourth bank is chosen, and its four blocks are distributed such that each of the four banks receives one: 1 3 4 1.
+;The third bank is chosen, and the same thing happens: 2 4 1 2.
+;At this point, we've reached a state we've seen before: 2 4 1 2 was already seen. The infinite loop is detected after the fifth block redistribution cycle, and so the answer in this example is 5.
+;
+;Given the initial block counts in your puzzle input, how many redistribution cycles must be completed before a configuration is produced that has been seen before?
+
+(def input-6 "11\t11\t13\t7\t0\t15\t5\t5\t4\t4\t1\t1\t7\t1\t15\t11")
+
+;; Day 7
+
+;One program at the bottom supports the entire tower. It's holding a large disc, and on the disc are balanced several more sub-towers. At the bottom of these sub-towers, standing on the bottom disc, are other programs, each holding their own disc, and so on. At the very tops of these sub-sub-sub-...-towers, many programs stand simply keeping the disc below them balanced but with no disc of their own.
+;
+;You offer to help, but first you need to understand the structure of these towers. You ask each program to yell out their name, their weight, and (if they're holding a disc) the names of the programs immediately above them balancing on that disc. You write this information down (your puzzle input). Unfortunately, in their panic, they don't do this in an orderly fashion; by the time you're done, you're not sure which program gave which information.
+;
+;For example, if your list is the following:
+;
+;pbga (66)
+;xhth (57)
+;ebii (61)
+;havc (66)
+;ktlj (57)
+;fwft (72) -> ktlj, cntj, xhth
+;qoyq (66)
+;padx (45) -> pbga, havc, qoyq
+;tknk (41) -> ugml, padx, fwft
+;jptl (61)
+;ugml (68) -> gyxo, ebii, jptl
+;gyxo (61)
+;cntj (57)
+;...then you would be able to recreate the structure of the towers that looks like this:
+;
+;gyxo
+;/
+;ugml - ebii
+;/      \
+;|         jptl
+;|
+;|         pbga
+;/        /
+;tknk --- padx - havc
+;\        \
+;|         qoyq
+;|
+;|         ktlj
+;\      /
+;fwft - cntj
+;\
+;xhth
+;In this example, tknk is at the bottom of the tower (the bottom program), and is holding up ugml, padx, and fwft. Those programs are, in turn, holding up other programs; in this example, none of those programs are holding up any other programs, and are all the tops of their own towers. (The actual tower balancing in front of you is much larger.)
+;
+;Before you're ready to help them, you need to make sure your information is correct. What is the name of the bottom program?
+
+(def input-7 (slurp "assets/input-7.txt"))
+
+(defn problem-7a
+  [input]
+   (->> (clojure.string/split input #"\n")
+       (sort-by (fn [program]
+                  (-> (clojure.string/split program #" ")
+                      (second)
+                      (read-string)
+                       (nth 0))))
+       (last)))
+
+(comment
+  (clojure.pprint/pprint input-7)
+  (problem-7a input-7)
+  ;; pdvmaam WRONG, sortera på vikt går ej.
+  ;; Får kolla på någon som ingen har på sig, bra med seq-contains?
+  )
+
+
+
