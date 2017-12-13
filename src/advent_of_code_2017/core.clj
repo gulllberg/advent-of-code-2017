@@ -250,17 +250,8 @@
 
 (defn problem-3b
   [input]
-  (loop [[x y] [2 -1]
-         ;; Kan initiera med mindre?
-         grid {"0+0"   1
-               "1+0"   1
-               "1+1"   2
-               "0+1"   4
-               "-1+1"  5
-               "-1+0"  10
-               "-1+-1" 11
-               "0+-1"  23
-               "1+-1"  25}]
+  (loop [[x y] [0 1]
+         grid {"0+0"   1}]
     (let [north (get grid (str x "+" (inc y)))
           north-west (get grid (str (dec x) "+" (inc y)))
           west (get grid (str (dec x) "+" y))
@@ -280,18 +271,8 @@
                            (not (nil? west))
                            [0 1]
 
-                           ;; Kan tas bort?
-                           (and (not (nil? south))
-                                (not (nil? east)))
-                           [-1 0]
-
                            (not (nil? south))
                            [-1 0]
-
-                           ;; Kan tas bort?
-                           (and (not (nil? north))
-                                (not (nil? east)))
-                           [0 -1]
 
                            (not (nil? east))
                            [0 -1]
@@ -299,7 +280,8 @@
                            (not (nil? north))
                            [1 0]
 
-                           :else (println "Hittade inte nästa riktning"))]
+                           :else
+                           [1 0])]
       (if (> sum input)
         sum
         (recur (mapv + [x y] next-direction)
