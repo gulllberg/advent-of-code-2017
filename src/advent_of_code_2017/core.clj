@@ -469,6 +469,56 @@
 
 (def input-6 "11\t11\t13\t7\t0\t15\t5\t5\t4\t4\t1\t1\t7\t1\t15\t11")
 
+(defn problem-6-reallocate
+  {:test (fn []
+           (is= (problem-6-reallocate [0 2 7 0]) [2 4 1 2]))}
+  [memory-banks]
+  (let [max-value (apply max memory-banks)
+        max-index (.indexOf memory-banks max-value)]
+    (-> (reduce (fn [[memory-banks index] _]
+                  [(update memory-banks index inc)
+                   (mod (inc index) (count memory-banks))])
+                [(assoc memory-banks max-index 0) (mod (inc max-index) (count memory-banks))]
+                (range max-value))
+        (first))))
+
+(defn problem-6a
+  {:test (fn []
+           (is= (problem-6a "0\t2\t7\t0") 5))}
+  [input]
+  (let [memory-banks (->> (clojure.string/split input #"\t")
+                          (mapv read-string))]
+    (loop [memory-banks memory-banks
+           configurations #{}
+           cycles 0]
+      (if (contains? configurations memory-banks)
+        cycles
+        (recur (problem-6-reallocate memory-banks)
+               (conj configurations memory-banks)
+               (inc cycles))))))
+
+(defn problem-6b
+  {:test (fn []
+           (is= (problem-6b "0\t2\t7\t0") 4))}
+  [input]
+  (let [memory-banks (->> (clojure.string/split input #"\t")
+                          (mapv read-string))]
+    (loop [memory-banks memory-banks
+           configurations {}
+           cycles 0]
+      (if (contains? configurations memory-banks)
+        (- cycles (get configurations memory-banks))
+        (recur (problem-6-reallocate memory-banks)
+               (assoc configurations memory-banks cycles)
+               (inc cycles))))))
+
+(comment
+  (problem-6a input-6)
+  ;; 4074
+  (problem-6b input-6)
+  ;; 2793
+  )
+
 ;; Day 7
 
 ;One program at the bottom supports the entire tower. It's holding a large disc, and on the disc are balanced several more sub-towers. At the bottom of these sub-towers, standing on the bottom disc, are other programs, each holding their own disc, and so on. At the very tops of these sub-sub-sub-...-towers, many programs stand simply keeping the disc below them balanced but with no disc of their own.
@@ -652,26 +702,26 @@
                          (clojure.string/split #"\n"))]
     (->> instructions
          (reduce (fn [registers instruction]
-                  (let [instruction-parts (clojure.string/split instruction #" ")
-                        register-to-modify (nth instruction-parts 0)
-                        modification-fn (resolve (symbol (nth instruction-parts 1)))
-                        modification-amount (read-string (nth instruction-parts 2))
-                        condition-register (nth instruction-parts 4)
-                        condition-operator (resolve (symbol (nth instruction-parts 5)))
-                        condition-amount (read-string (nth instruction-parts 6))]
-                    (as-> registers $
-                          (if (contains? $ register-to-modify)
-                            $
-                            (assoc $ register-to-modify 0))
-                          (if (contains? $ condition-register)
-                            $
-                            (assoc $ condition-register 0))
-                          (if (condition-operator (get $ condition-register) condition-amount)
-                            (update $ register-to-modify modification-fn modification-amount)
-                            $))))
-                {})
-        (vals)
-        (apply max))))
+                   (let [instruction-parts (clojure.string/split instruction #" ")
+                         register-to-modify (nth instruction-parts 0)
+                         modification-fn (resolve (symbol (nth instruction-parts 1)))
+                         modification-amount (read-string (nth instruction-parts 2))
+                         condition-register (nth instruction-parts 4)
+                         condition-operator (resolve (symbol (nth instruction-parts 5)))
+                         condition-amount (read-string (nth instruction-parts 6))]
+                     (as-> registers $
+                           (if (contains? $ register-to-modify)
+                             $
+                             (assoc $ register-to-modify 0))
+                           (if (contains? $ condition-register)
+                             $
+                             (assoc $ condition-register 0))
+                           (if (condition-operator (get $ condition-register) condition-amount)
+                             (update $ register-to-modify modification-fn modification-amount)
+                             $))))
+                 {})
+         (vals)
+         (apply max))))
 
 ;To be safe, the CPU also needs to know the highest value held in any register during this process so that it can decide how much memory to allocate to these operations. For example, in the above instructions, the highest value ever held was 10 (in register c after the third instruction was evaluated).
 
@@ -686,7 +736,7 @@
                          (clojure.string/replace #"dec" "-")
                          (clojure.string/split #"\n"))]
     (->> instructions
-      (reduce (fn [[registers max-value] instruction]
+         (reduce (fn [[registers max-value] instruction]
                    (let [instruction-parts (clojure.string/split instruction #" ")
                          register-to-modify (nth instruction-parts 0)
                          modification-fn (resolve (symbol (nth instruction-parts 1)))
@@ -707,7 +757,7 @@
                            [$ (if (> (apply max (vals $)) max-value)
                                 (apply max (vals $))
                                 max-value)])))
-                [{} 0])
+                 [{} 0])
          (second))))
 
 (comment
