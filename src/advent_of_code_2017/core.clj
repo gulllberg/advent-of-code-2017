@@ -558,8 +558,7 @@
                                       []
                                       (-> (nth program-dependencies 1)
                                           (clojure.string/trim)
-                                          (clojure.string/split #", ")
-                                          (vector)))]
+                                          (clojure.string/split #", ")))]
     (filter (fn [program]
               (seq-contains? program-dependencies-vector (-> (clojure.string/split program #" ")
                                                              (nth 0))))
@@ -574,13 +573,47 @@
 
 (defn get-total-weight
   [programs program]
-  (apply + (get-weight program) (map get-weight (get-dependencies programs program))))
+  (apply +
+         (get-weight program)
+         (map (fn [dependency]
+                (get-total-weight programs dependency))
+              (get-dependencies programs program))))
+
+(defn problem-7b
+  [input]
+  (let [programs (clojure.string/split input #"\n")
+        unbalanced-program (->> programs
+                                (filter (fn [program]
+                                          (let [dependencies (get-dependencies programs program)]
+                                            (and (> (count dependencies) 0)
+                                                 (apply not= (map (fn [dependency]
+                                                                    (get-total-weight programs dependency))
+                                                                  dependencies))))))
+                                (sort-by (fn [program]
+                                           (get-total-weight programs program)))
+                                (first))
+        unbalanced-program-dependencies (get-dependencies programs unbalanced-program)
+        sorted-unbalanced-program-dependencies (sort-by (fn [dependency]
+                                                          (get-total-weight programs dependency))
+                                                        unbalanced-program-dependencies)
+        sorted-unbalanced-program-dependencies-weights (map (fn [dependency]
+                                                              (get-total-weight programs dependency))
+                                                            sorted-unbalanced-program-dependencies)]
+    (if (= (first sorted-unbalanced-program-dependencies-weights)
+           (second sorted-unbalanced-program-dependencies-weights))
+      (- (get-weight (last sorted-unbalanced-program-dependencies))
+         (- (apply max sorted-unbalanced-program-dependencies-weights)
+            (apply min sorted-unbalanced-program-dependencies-weights)))
+      (+ (get-weight (first sorted-unbalanced-program-dependencies))
+         (- (apply max sorted-unbalanced-program-dependencies-weights)
+            (apply min sorted-unbalanced-program-dependencies-weights))))))
 
 (comment
   (problem-7a input-7)
   ;; hlqnsbe
 
-  (get-total-weight input-7 (nth (clojure.string/split input-7 #"\n") 0))
+  (problem-7b input-7)
+  ;; 1993
   )
 
 
