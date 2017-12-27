@@ -616,5 +616,105 @@
   ;; 1993
   )
 
+;; Day 8
 
+(def input-8 (slurp "assets/input-8.txt"))
+
+;You receive a signal directly from the CPU. Because of your recent assistance with jump instructions, it would like you to compute the result of a series of unusual register instructions.
+;
+;Each instruction consists of several parts: the register to modify, whether to increase or decrease that register's value, the amount by which to increase or decrease it, and a condition. If the condition fails, skip the instruction without modifying the register. The registers all start at 0. The instructions look like this:
+;
+;b inc 5 if a > 1
+;a inc 1 if b < 5
+;c dec -10 if a >= 1
+;c inc -20 if c == 10
+;These instructions would be processed as follows:
+;
+;Because a starts at 0, it is not greater than 1, and so b is not modified.
+;a is increased by 1 (to 1) because b is less than 5 (it is 0).
+;c is decreased by -10 (to 10) because a is now greater than or equal to 1 (it is 1).
+;c is increased by -20 (to -10) because c is equal to 10.
+;After this process, the largest value in any register is 1.
+;
+;You might also encounter <= (less than or equal to) or != (not equal to). However, the CPU doesn't have the bandwidth to tell you what all the registers are named, and leaves that to you to determine.
+;
+;What is the largest value in any register after completing the instructions in your puzzle input?
+
+(defn problem-8a
+  {:test (fn []
+           (is= (problem-8a "b inc 5 if a > 1\na inc 1 if b < 5\nc dec -10 if a >= 1\nc inc -20 if c == 10\n")
+                1))}
+  [input]
+  (let [instructions (-> (clojure.string/replace input #"!=" "not=")
+                         (clojure.string/replace #"==" "=")
+                         (clojure.string/replace #"inc" "+")
+                         (clojure.string/replace #"dec" "-")
+                         (clojure.string/split #"\n"))]
+    (->> instructions
+         (reduce (fn [registers instruction]
+                  (let [instruction-parts (clojure.string/split instruction #" ")
+                        register-to-modify (nth instruction-parts 0)
+                        modification-fn (resolve (symbol (nth instruction-parts 1)))
+                        modification-amount (read-string (nth instruction-parts 2))
+                        condition-register (nth instruction-parts 4)
+                        condition-operator (resolve (symbol (nth instruction-parts 5)))
+                        condition-amount (read-string (nth instruction-parts 6))]
+                    (as-> registers $
+                          (if (contains? $ register-to-modify)
+                            $
+                            (assoc $ register-to-modify 0))
+                          (if (contains? $ condition-register)
+                            $
+                            (assoc $ condition-register 0))
+                          (if (condition-operator (get $ condition-register) condition-amount)
+                            (update $ register-to-modify modification-fn modification-amount)
+                            $))))
+                {})
+        (vals)
+        (apply max))))
+
+;To be safe, the CPU also needs to know the highest value held in any register during this process so that it can decide how much memory to allocate to these operations. For example, in the above instructions, the highest value ever held was 10 (in register c after the third instruction was evaluated).
+
+(defn problem-8b
+  {:test (fn []
+           (is= (problem-8b "b inc 5 if a > 1\na inc 1 if b < 5\nc dec -10 if a >= 1\nc inc -20 if c == 10\n")
+                10))}
+  [input]
+  (let [instructions (-> (clojure.string/replace input #"!=" "not=")
+                         (clojure.string/replace #"==" "=")
+                         (clojure.string/replace #"inc" "+")
+                         (clojure.string/replace #"dec" "-")
+                         (clojure.string/split #"\n"))]
+    (->> instructions
+      (reduce (fn [[registers max-value] instruction]
+                   (let [instruction-parts (clojure.string/split instruction #" ")
+                         register-to-modify (nth instruction-parts 0)
+                         modification-fn (resolve (symbol (nth instruction-parts 1)))
+                         modification-amount (read-string (nth instruction-parts 2))
+                         condition-register (nth instruction-parts 4)
+                         condition-operator (resolve (symbol (nth instruction-parts 5)))
+                         condition-amount (read-string (nth instruction-parts 6))]
+                     (as-> registers $
+                           (if (contains? $ register-to-modify)
+                             $
+                             (assoc $ register-to-modify 0))
+                           (if (contains? $ condition-register)
+                             $
+                             (assoc $ condition-register 0))
+                           (if (condition-operator (get $ condition-register) condition-amount)
+                             (update $ register-to-modify modification-fn modification-amount)
+                             $)
+                           [$ (if (> (apply max (vals $)) max-value)
+                                (apply max (vals $))
+                                max-value)])))
+                [{} 0])
+         (second))))
+
+(comment
+  (problem-8a input-8)
+  ; 5143
+
+  (problem-8b input-8)
+  ; 6209
+  )
 
